@@ -1,9 +1,9 @@
-#ifndef COMMON_LIB_H
-#define COMMON_LIB_H
-
-#include <eigen_conversions/eigen_msg.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
+// #ifndef COMMON_LIB_H
+// #define COMMON_LIB_H
+#pragma once
+// #include <eigen_conversions/eigen_msg.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -13,9 +13,10 @@
 #include <boost/array.hpp>
 #include <unsupported/Eigen/ArpackSupport>
 
-#include "faster_lio/Pose6D.h"
+#include <faster_lio_ros2/msg/pose6_d.hpp>
 #include "options.h"
 #include "so3_math.h"
+#include <deque>
 
 using PointType = pcl::PointXYZINormal;
 using PointCloudType = pcl::PointCloud<PointType>;
@@ -32,7 +33,7 @@ inline Eigen::Matrix<S, 3, 1> VecFromArray(const std::vector<double> &v) {
 }
 
 template <typename S>
-inline Eigen::Matrix<S, 3, 1> VecFromArray(const boost::array<S, 3> &v) {
+inline Eigen::Matrix<S, 3, 1> VecFromArray(const std::array<S, 3> &v) {
     return Eigen::Matrix<S, 3, 1>(v[0], v[1], v[2]);
 }
 
@@ -44,7 +45,7 @@ inline Eigen::Matrix<S, 3, 3> MatFromArray(const std::vector<double> &v) {
 }
 
 template <typename S>
-inline Eigen::Matrix<S, 3, 3> MatFromArray(const boost::array<S, 9> &v) {
+inline Eigen::Matrix<S, 3, 3> MatFromArray(const std::array<S, 9> &v) {
     Eigen::Matrix<S, 3, 3> m;
     m << v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8];
     return m;
@@ -52,7 +53,7 @@ inline Eigen::Matrix<S, 3, 3> MatFromArray(const boost::array<S, 9> &v) {
 
 inline std::string DEBUG_FILE_DIR(const std::string &name) { return std::string(ROOT_DIR) + "Log/" + name; }
 
-using Pose6D = faster_lio::Pose6D;
+using Pose6D = faster_lio_ros2::msg::Pose6D;
 using V3D = Eigen::Vector3d;
 using V4D = Eigen::Vector4d;
 using V5D = Eigen::Matrix<double, 5, 1>;
@@ -83,7 +84,7 @@ struct MeasureGroup {
     double lidar_bag_time_ = 0;
     double lidar_end_time_ = 0;
     PointCloudType::Ptr lidar_ = nullptr;
-    std::deque<sensor_msgs::Imu::ConstPtr> imu_;
+    std::deque<sensor_msgs::msg::Imu::ConstPtr> imu_;
 };
 
 template <typename T>
@@ -242,5 +243,17 @@ inline bool esti_plane(Eigen::Matrix<T, 4, 1> &pca_result, const PointVector &po
     return true;
 }
 
+static double toSec(builtin_interfaces::msg::Time time_stamp)
+{
+    return rclcpp::Time(time_stamp).seconds();
+}
+
+static rclcpp::Time get_ros_time(double timestamp)
+{
+    int32_t sec = std::floor(timestamp);
+    auto nanosec_d = (timestamp - std::floor(timestamp)) * 1e9;
+    uint32_t nanosec = nanosec_d;
+    return rclcpp::Time(sec, nanosec);
+}
 }  // namespace faster_lio::common
-#endif
+// #endif
